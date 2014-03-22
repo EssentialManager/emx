@@ -3,7 +3,7 @@
     #
     #   EMX (Essential Manager X)
     #	Framework for JavaScript and PHP
-    # 	Version 1.0.0
+    # 	Version 1.0.1
     #
     #   Developed By: Mark Hünermund Jensen
     #   www.hunermund.dk
@@ -80,7 +80,7 @@
 	    			AutoLoadJQuery: true,
 
 	    			// The link to the jQuery library which will be loaded if not already done
-	    			JQueryLocation: '//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js',
+	    			JQueryLocation: 'https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js',
 
 	    			// The default Ajax location can be used to streamline the access point of all AJAX calls.
 	    			// It is typically used when no URL is supplied in AJAX calls
@@ -194,11 +194,11 @@
 
 	    				// First we check to see if the Urls parameter actually refers to an asset
 
-	    				if ( Urls.match(/^[A-Z]([a-zA-Z]){3,23}$/) ) {
+	    				if ( typeof Urls === 'string' && Urls.match(/^[A-Z]([a-zA-Z]){3,23}$/) ) {
 	    					var Asset 	= this.GetAsset(Urls);
 
 	    					Urls 		= Asset.Urls;
-	    					Callback 	= Asset.Success;
+	    					Callback 	= Asset.Callback;
 	    				}
 
 		    			// If the provided argument is a string we add it to an object to ease the furhter
@@ -270,12 +270,16 @@
 			    				// If the file has been accepted this is the shared post-processing after inserting the file
 			    				if ( Accept ) {
 
+			    					var FullUrl 			= Element.src || Element.href;
+
 			    					// List the URL in the stack and set its default "Loaded" property to false
-			    					this._Stack[Url] 	= { Loaded: false };
+			    					this._Stack[FullUrl] 	= { Loaded: false };
 
 			    					// Add an event listener to figure out when to execute the callback
 			    					Element.addEventListener('load', function() {
 
+			    						var Url 						= this.src || this.href;
+			    						
 			    						// We start by setting this library's "Loaded" property to true
 			    						Scope.Core._Stack[Url].Loaded 	= true;
 
@@ -342,13 +346,74 @@
 	    	    },
 
 	    	    /* ------------------------------------------------------------------------------------------------------
-	    	       CreateAsset (Scope.Core.CreateAsset)
+	    	       UNLOAD (Scope.Core.UnLoad)
+
+	    	       Remove a CSS or JavaScript file from the document
+	    	       The URL(s) provided must be absolute
+	    	    ------------------------------------------------------------------------------------------------------ */
+
+	    	    UnLoad: function( Urls, Callback ) {
+
+	    	    	// Test to see if the provided argument is a string
+	    	    	if ( typeof Urls === 'string' ) {
+
+	    	    		// ... And if so add it to an object for further processing
+	    	    		Urls 		= [Urls]
+
+	    	    	}
+
+	    	    	// Test if the URLs are gathered in an object
+	    	    	if ( typeof Urls === 'object' ) {
+
+	    	    		// Iterate over the URLs
+	    	    		for ( I in Urls ) {
+
+	    	    			var Url 		= Urls[I];
+
+	    	    			// And now we want to iterate over all SCRIPT and LINK tags
+	    	    			// to compare their resource URL against the URL we are attempting
+	    	    			// to remove
+
+			    	    	var Scripts 	= document.getElementsByTagName('script');
+			    	    	var Links 		= document.getElementsByTagName('link');
+
+			    	    	// Loop over the scripts and compare SRC
+
+			    	    	for ( X in Scripts ) {
+			    	    		if ( Scripts[X].src == Url ) {
+			    	    			Scripts[X].parentNode.removeChild(Scripts[X]);
+			    	    		}
+			    	    	}
+
+			    	    	// And loop over the links to compare their HREF
+
+			    	    	for ( X in Links ) {
+			    	    		if ( Links[X].href == Url ) {
+			    	    			Links[X].parentNode.removeChild(Links[X]);
+			    	    		}
+			    	    	}
+
+	    	    		}
+
+	    	    		// If the callback is a valid function it is executed when all
+	    	    		// elements are properly removed
+
+	    	    		if ( typeof Callback === 'function' ) {
+	    	    			Callback();
+	    	    		}
+
+	    	    	}
+
+	    	    },
+
+	    	    /* ------------------------------------------------------------------------------------------------------
+	    	       DEFINE ASSET (Scope.Core.DefineAsset)
 
 	    	       Manage the assets and dependencies by creating groups to be easily loaded by JavaScript
 	    	       and PHP alike
 	    	    ------------------------------------------------------------------------------------------------------ */
 
-	    	    CreateAsset: function( AssetId, Asset ) {
+	    	    DefineAsset: function( AssetId, Asset ) {
 
 	    	    	try {
 
@@ -363,11 +428,164 @@
 	    	    		}
 
 	    	    		// Insert the asset to our asset repository
-	    	    		this._Assets[AssetId] 	= Asset;
+	    	    		this._Assets[AssetId] 			= Asset;
+	    	    		this._Assets[AssetId].Loaded 	= false;
+	    	    		this._Assets[AssetId].Loading 	= false;
 
 	    	    	} catch ( Error ) {
 	    	    		Scope.Debug(Error);
 	    	    	}
+
+	    	    },
+
+	    	    /* ------------------------------------------------------------------------------------------------------
+	    	       LOAD ASSET (Scope.Core.LoadAsset)
+
+	    	       Load an asset.
+
+	    	       This function is in many ways similar to the Load function but is capable of resolving dependencies
+	    	       before continuing
+
+	    	       Possible, but unlikely issue: When two assets load dependencies simultaneously and they require the
+	    	       same dependency only one of them is allowed to continue, which is done to prevent several instances
+	    	       of the same script. And that's fine, but! When a given asset tries to resolve a dependency which
+	    	       is being loaded by another asset it may resort to quickly to proceed with its own agenda.
+
+	    	       WARNING! The _Callback is not intended for use by the developer. It is only intended to be used
+	    	       internally.
+	    	    ------------------------------------------------------------------------------------------------------ */
+
+	    	    LoadAsset: function ( AssetId, _Callback ) {
+
+	    	    	// Get the asset from the registry
+	    	    	var Asset 					= this.GetAsset(AssetId);
+
+	    	    	// Load the dependencies into a list
+	    	    	var Dependencies 			= Asset.Dependencies;
+
+	    	    	// We assume that all dependencies are resolved until proven otherwise
+	    	    	var DependenciesResolved 	= true;
+
+	    	    	// Iterate over the dependencies
+	    	    	for ( I in Dependencies ) {
+
+	    	    		// Check if the dependency asset is either loaded or loading
+
+	    	    		if ( ! ( this._Assets[Dependencies[I]].Loaded | this._Assets[Dependencies[I]].Loading ) ) {
+
+	    	    			// Load the asset and pass a callback which will call this method again to try and
+	    	    			// load the asset after the dependency has been resolved
+	    	    			this.LoadAsset(Dependencies[I], function() {
+	    	    				Scope.Core.LoadAsset(AssetId, _Callback);
+	    	    			});
+
+	    	    			// Instruct not to complete the loading of this exact asset just yet
+	    	    			DependenciesResolved 	= false;
+
+	    	    			// Break the iteration
+	    	    			break;
+
+	    	    		}
+
+	    	    	}
+
+	    	    	// If all dependencies for this asset has been resolved we continue loading it
+	    	    	if ( DependenciesResolved ) {
+
+	    	    		// Set the loading property to true, to instruct other simultaneous dependency
+	    	    		// resolvers that this asset is being loaded
+
+	    	    		Scope.Core._Assets[AssetId].Loading 	= true;
+
+	    	    		// Load the asset
+	    	    		this.Load(Asset.Urls, function() {
+
+	    	    			// Instruct that loading is completed
+
+	    	    			Scope.Core._Assets[AssetId].Loaded 		= true;
+	    	    			Scope.Core._Assets[AssetId].Loading 	= false;
+
+	    	    			// If the asset has a developer-provided callback we execute it before
+	    	    			// continuing
+
+	    	    			if ( typeof Asset.Callback === 'function' ) {
+	    	    				Asset.Callback();
+	    	    			}
+
+	    	    			// If this asset is a dependency of another asset we go back to the original
+	    	    			// asset to see if more dependencies are to be loaded or if the asset itself
+	    	    			// can finally load
+
+	    	    			if ( typeof _Callback === 'function' ) {
+	    	    				_Callback();
+	    	    			}
+
+	    	    		});
+
+	    	    	}
+
+	    	    },
+
+	    	    /* ------------------------------------------------------------------------------------------------------
+	    	       UN-LOAD ASSET (Scope.Core.UnLoadAsset)
+
+	    	       Will first off un-load an asset
+
+	    	       It will do so "deeply" meaning that it will also remove its dependencies, but only until
+	    	       a given dependency is also required by other assets
+	    	    ------------------------------------------------------------------------------------------------------ */
+
+	    	    UnLoadAsset: function( AssetId ) {
+
+	    	    	// Import the asset to a variable
+	    	    	var Asset 		= this.GetAsset(AssetId);
+
+	    	    	// We assume we can proceed by un-loading this asset
+	    	    	var Proceed 	= true;
+
+	    	    	// Check if any loaded assets rely on this asset
+	    	    	for ( I in this._Assets ) {
+
+	    	    		// Load the asset we want to test
+	    	    		var TestAsset		= this._Assets[I];
+
+	    	    		// Load its dependencies
+	    	    		var Dependencies 	= TestAsset.Dependencies;
+
+	    	    		// If the asset is loaded (no reason to test on un-loaded assets)
+	    	    		if ( TestAsset.Loaded ) {
+
+	    	    			// We iterate over its dependencies to see if it requires this asset which
+	    	    			// we are trying to un-load
+	    	    			for ( X in Dependencies ) {
+	    	    				if ( Dependencies[X] == AssetId ) {
+	    	    					Proceed 	= false;
+	    	    				}
+	    	    			}
+
+	    	    		}
+
+	    	    	}
+
+	    	    	// Test if we can proceed the un-load
+	    	    	if ( Proceed ) {
+
+		    	    	this.UnLoad(Asset.Urls, function() {
+
+		    	    		// Instruct the asset registry that the asset is no longer loader, nor loading
+		    	    		Scope.Core._Assets[AssetId].Loading 	= false;
+		    	    		Scope.Core._Assets[AssetId].Loaded 		= false;
+
+		    	    		// Iterate over the dependencies to test if there are more libraries that
+		    	    		// we can offload.
+
+		    	    		for ( I in Asset.Dependencies ) {
+		    	    			Scope.Core.UnLoadAsset(Asset.Dependencies[I]);
+		    	    		}
+
+		    	    	});
+
+		    	    }
 
 	    	    },
 
@@ -377,7 +595,7 @@
 
 	    	    GetAsset: function( AssetId ) {
 
-	    	    	// Return the requested asset by asset ID
+	    	    	// Return the requested asset by ID
 	    	    	return this._Assets[AssetId];
 
 	    	    },
