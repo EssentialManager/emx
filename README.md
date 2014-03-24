@@ -9,11 +9,9 @@ Currently supports:
 * Dependency management for JavaScript libraries (Assets)
 * OOP architecture with inversion of control and dependency injection
 * AJAX architecture based on JSON
+* MVC (In Development)
+* Unit Testing (Coming Soon)
 
 Documentation
 ===
 https://github.com/EssentialManager/emx/wiki
-
-Future
-===
-EMX will support MVC and RESTful API structure later in 2014.
