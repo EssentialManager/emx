@@ -49,9 +49,98 @@
 
    	    function Debug( $Message ) {
 
-            throw new Exception('Debug: ' . $Message);
+            $CustomDebugFunction    = Options::Get('Debug');
+            $DebugMode              = Options::Get('DebugMode');
+
+            if ( $DebugMode ) {
+                if ( is_callable($CustomDebugFunction) ) {
+                    $CustomDebugFunction($Message);
+                } else {
+                    throw new Exception('Debug: ' . $Message);
+                }
+            }
 
    	    }
+
+        /* ======================================================================================================
+           START
+        ====================================================================================================== */
+
+        function Start( $Callback = null ) {
+
+            // Create the directories we use through-out the framework as constant so they cannot
+            // be overwritten
+            define('EMX_BASE_DIR', rtrim(realpath(__DIR__), '/'));
+            define('EMX_PHP_DIR', EMX_BASE_DIR . '/php');
+
+            // Set the location to the MVC part of the framework
+            $MVCLocation        = sprintf('%s/libs/emx-mvc.php', EMX_PHP_DIR);
+
+            // If the MVC file exists and MVC is enabled in the options we load the framework
+            if ( file_exists($MVCLocation) && Options::Get('MVC') ) {
+                require_once    $MVCLocation;
+            }
+
+            // If the passed callback is a valid callable function we execute it
+            if ( is_callable($Callback) ) {
+                $Callback();
+            }
+
+        }
+
+        /* ======================================================================================================
+           OPTIONS
+        ====================================================================================================== */
+
+        final class Options {
+
+            private static $_Config     = array(
+                                            'MVC'       => true
+                                        );
+
+            public static function Get( $Key = null ) {
+                if ( is_null($Key) || ! $Key ) {
+                    return self::$_Config;
+                } else {
+                    return self::$_Config[(string) $Key];
+                }
+            }
+
+            public static function Set( $Key, $Value = null ) {
+                if ( is_array($Key) ) {
+                    foreach ( $Key as $I => $X ) {
+                        self::$_Config[(string) $I]     = $X;
+                    }
+                } else {
+                    self::$_Config[(string) $Key]       = $Value;
+                }
+            }
+
+        }
+
+        /* ======================================================================================================
+           OPTIONS CLASS
+        ====================================================================================================== */
+
+        final class StandardClassOptions {
+
+            private $_Options       = array();
+
+            public function Get( $Key ) {
+                return $this->_Options[(string) $Key];
+            }
+
+            public function Set( $Key, $Value = null ) {
+                if ( is_array($Key) ) {
+                    foreach ( $Key as $I => $X ) {
+                        $this->_Options[(string) $I]    = $X;
+                    }
+                } else {
+                    $this->_Options[(string) $Key]      = $Value;
+                }
+            }
+
+        }
 
    	    /* ======================================================================================================
    	       ABSTRACT EMX OBJECT CLASS
@@ -64,6 +153,8 @@
             ------------------------------------------------------------------------------------------------------ */
 
             protected $Instances    = array();
+
+            protected $Options;
 
    	        /* ------------------------------------------------------------------------------------------------------
    	           ABSTRACT FUNCTIONS
@@ -83,6 +174,30 @@
    	        	return $this->CreateDependencyModel( new DependencyModel );
 
    	        }
+
+            /* ------------------------------------------------------------------------------------------------------
+               SET OPTIONS
+            ------------------------------------------------------------------------------------------------------ */
+
+            final public function SetOptions( $Options ) {
+
+                $this->Options      = $Options;
+
+                $this->Options()->Set($this->_DefaultOptions);
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               OPTIONS
+
+               Access the options supplied to this object
+            ------------------------------------------------------------------------------------------------------ */
+
+            final public function Options() {
+
+                return $this->Options;
+
+            }
 
             /* ------------------------------------------------------------------------------------------------------
                SET INSTANCE
@@ -224,6 +339,9 @@
 
                     // Create an instance of the class
    	    			$Instance 			= new $ParsedClassName;
+
+                    // Insert the options object
+                    $Instance->SetOptions( new StandardClassOptions );
 
                     // Load a list of the dependencies the class demands
    	    			$Dependencies 		= $Instance->GetDependencies();
