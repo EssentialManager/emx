@@ -9,8 +9,8 @@ Currently supports:
 * Dependency management for JavaScript libraries (Assets)
 * OOP architecture with inversion of control and dependency injection
 * AJAX architecture based on JSON
-* MVC (In Development)
-* Unit Testing (Coming Soon)
+* MVC (__In Development__)
+* Unit Testing (__Coming Soon__)
 
 Documentation
 ===
