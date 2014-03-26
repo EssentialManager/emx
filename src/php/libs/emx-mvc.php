@@ -86,7 +86,6 @@
                 $Method                     = ( isset($_GET['EmxMethod']) ) ? (string) $_GET['EmxMethod'] : '';
 
                 try {
-
                     // We start off by making sure that the file containing the controller exists in the desired
                     // location
 
@@ -113,20 +112,50 @@
 
                     // Instantiate an instance of the controller class
 
-                    $ControllerInstance     = new $Controller;
+                    $ControllerInstance     = \Emx\Factory::Create($Controller);
+
+                    $ControllerInstance->Options()->Set('ModelBaseLocation', $this->Options()->Get('ModelBaseLocation'));
+                    $ControllerInstance->Options()->Set('ViewBaseLocation', $this->Options()->Get('ViewBaseLocation'));
 
                     // If the attempted method does not exist in the controller we default to Index
 
                     if ( ! method_exists($ControllerInstance, $Method) ) {
+
+                        // All controllers are required to have a method named Index, so we can safely
+                        // make a fallback to that
+
                         $Method             = 'Index';
+
                     }
 
-                    $ControllerInstance->$Method();
+                    if ( $this->Options()->Get('AjaxMode') ) {
+                        if ( ! ini_get('output_buffering') ) {
+                            throw new Exception('Output buffering is not enabled.');
+                        }
+
+                        ob_start();
+
+                        $ControllerInstance->$Method();
+
+                        $BufferContent      = ob_get_clean();
+
+                        return array(
+                            'ControllerResponse'    => $BufferContent
+                        );
+                    } else {
+                        $ControllerInstance->$Method();
+                    }
 
                 } catch ( Exception $e ) {
 
-                    // Send a debugging message to the developer
-                    \Emx\Debug($e->getMessage());
+                    // If Ajax Mode is active we run the caught error through the native
+                    // native termination method
+
+                    if ( $this->Options->Get('AjaxMode') ) {
+                        \Emx\Ajax::Terminate($e->getMessage());
+                    } else {
+                        \Emx\Debug($e->getMessage());
+                    }
 
                 }
 
@@ -138,7 +167,7 @@
            CONTROLLER
         ====================================================================================================== */
 
-        abstract class Controller {
+        abstract class Controller extends \Emx\StandardClass {
 
             /* ------------------------------------------------------------------------------------------------------
                DECLARATIONS
@@ -147,13 +176,100 @@
             abstract public function Index();
 
             /* ------------------------------------------------------------------------------------------------------
+               CREATE DEPENDENCY MODEL
+            ------------------------------------------------------------------------------------------------------ */
+
+            protected function CreateDependencyModel( $DependencyModel ) {
+                return $DependencyModel;
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               FETCH MODEL
+            ------------------------------------------------------------------------------------------------------ */
+
+            final protected function FetchModel( $Model ) {
+
+                // Write the location to where the model is expected to be
+                $ModelLocation      = rtrim($this->Options()->Get('ModelBaseLocation'), '/')
+                                        . sprintf('/%s.php', strtolower($Model));
+
+                try {
+
+                    // Check that the file exists
+                    if ( ! file_exists($ModelLocation) ) {
+                        throw new Exception(sprintf('File containing model "%s" was not found at "%s".', $Model, $ModelLocation));
+                    }
+
+                    // Load the model to the script
+                    require_once        $ModelLocation;
+
+                    // Verify that the model class exists
+                    if ( ! class_exists($Model) ) {
+                        throw new Exception(sprintf('Model "%s" does not exist.', $Model));
+                    }
+
+                    // Verify that the model is based on the abstract EMX MVC model class
+                    if ( strtolower(get_parent_class($Model)) != 'emx\mvc\model' ) {
+                        throw new Exception(sprintf('Model "%s" is not an extension of Emx\Mvc\Model.', $Model));
+                    }
+
+                    // Create the model via the factory (this also supports dependency injection)
+                    $ModelInstance      = \Emx\Factory::Create($Model);
+
+                    // Return the model
+                    return $ModelInstance;
+
+                } catch ( Exception $e ) {
+
+                    // Show eventual debugging message
+                    \Emx\Debug($e->getMessage());
+
+                }
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
                RENDER VIEW
             ------------------------------------------------------------------------------------------------------ */
 
             final public function Render( $View ) {
 
+                // Define the location to the view
 
+                $ViewLocation       = rtrim($this->Options()->Get('ViewBaseLocation'), '/')
+                                        . sprintf('/%s.php', strtolower($View));
 
+                try {
+                    // Verify that the file exists
+
+                    if ( ! file_exists($ViewLocation) ) {
+                        throw new Exception(sprintf('View "%s" was not found at "%s"', $View, $ViewLocation));
+                    }
+
+                    // We use include instead of require_once to avoid malfunction in cases
+                    // where the view is used multiple times
+
+                    include         $ViewLocation;
+
+                } catch ( Exception $e ) {
+
+                    // Show eventual debugging message
+                    \Emx\Debug($e->getMessage());
+
+                }
+
+            }
+
+        }
+
+        /* ======================================================================================================
+           MODEL
+        ====================================================================================================== */
+
+        abstract class Model extends \Emx\StandardClass {
+
+            protected function CreateDependencyModel( $DependencyModel ) {
+                return $DependencyModel;
             }
 
         }

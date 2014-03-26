@@ -23,6 +23,10 @@
 
    	    }
 
+        function Version() {
+            return '1.0.0';
+        }
+
    	    /* ======================================================================================================
    	       EXCEPTION
    	    ====================================================================================================== */
@@ -391,35 +395,21 @@
 	       AJAX
 	    ================================================================================================== */
 
-	    final class Ajax extends StandardClass {
+	    final class Ajax {
 
 	        /* ------------------------------------------------------------------------------------------------------
 	           DECLARATIONS
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        private $Response 		= array();
-	        private $ErrorState  	= false;
-	        private $ErrorMessage 	= null;
+	        private static $Response 		= array();
+	        private static $ErrorState  	= false;
+	        private static $ErrorMessage 	= null;
 
 	        /* ------------------------------------------------------------------------------------------------------
 	           CONSTRUCTOR
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        public function __construct() {
-
-	        	$this->StrapErrorHandler();
-
-	        }
-
-	        /* ------------------------------------------------------------------------------------------------------
-	           CREATE DEPENDENCY MODEL
-	        ------------------------------------------------------------------------------------------------------ */
-
-	        protected function CreateDependencyModel( $DependencyModel ) {
-
-	        	return $DependencyModel;
-
-	        }
+	        private function __construct() { }
 
 	        /* ------------------------------------------------------------------------------------------------------
 	           SET RESPONSE
@@ -427,9 +417,9 @@
 	           This response is returned and passed as JSON into the JavaScript callback procedure
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        public function SetResponse( array $Response ) {
+	        public static function SetResponse( array $Response ) {
 
-	        	$this->Response 	= $Response;
+	        	self::$Response 	= $Response;
 
 	        }
 
@@ -439,9 +429,9 @@
 	           Return the current response
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        public function GetResponse() {
+	        public static function GetResponse() {
 
-	        	return $this->Response;
+	        	return self::$Response;
 
 	        }
 
@@ -451,7 +441,7 @@
 	           Used to catch exceptions that are thrown outside Try/Catch constructs and in EMX AJAX context
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        private function StrapErrorHandler() {
+	        public static function StrapErrorHandler() {
 
 	        	set_exception_handler(function( $Message ) {
 
@@ -480,12 +470,17 @@
 	           Terminate the AJAX procedure and return an error message to the client
 	        ------------------------------------------------------------------------------------------------------ */
 
-	    	public function Terminate( $Message ) {
+	    	public static function Terminate( $Message ) {
 
-	    		$this->ErrorState 		= true;
-	    		$this->ErrorMessage 	= (string) $Message;
+                // If output buffering was active we want to make sure it is not drawn to the document
+                // since that will make the JSON response invalid
+                
+                ob_clean();
 
-	    		$this->Execute();
+	    		self::$ErrorState 		= true;
+	    		self::$ErrorMessage 	= (string) $Message;
+
+	    		self::Execute();
 
 	    	}
 
@@ -493,21 +488,21 @@
 	           EXECUTE
 	        ------------------------------------------------------------------------------------------------------ */
 
-	        public function Execute() {
+	        public static function Execute() {
 
 	        	echo json_encode(array(
 
 	        		// The success is indicated by the reversed value of the ErrorState
-	        		'Success' 	=> ! ( $this->ErrorState ),
+	        		'Success' 	=> ! ( self::$ErrorState ),
 
 	        		// Include the version number for comparison on the client-side
-	        		'Version' 	=> $this->Version(),
+	        		'Version' 	=> Version(),
 
 	        		// Include the response set the custom script which was executed
-	        		'Response' 	=> ( ! $this->ErrorState ) ? $this->GetResponse() : array(),
+	        		'Response' 	=> ( ! self::$ErrorState ) ? self::GetResponse() : array(),
 
 	        		// If an error message has been set by the Terminate method it will be included here
-	        		'Error' 	=> ( $this->ErrorMessage ) ? $this->ErrorMessage : null
+	        		'Error' 	=> ( self::$ErrorMessage ) ? self::$ErrorMessage : null
 
 	        	));
 
