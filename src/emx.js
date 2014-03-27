@@ -1,4 +1,3 @@
-
 	/* ######################################################################################################
     #
     #   EMX (Essential Manager X)
@@ -97,8 +96,8 @@
 	    			// point to the correct location
 	    			EMXLocation: 'emx/',
 
-	    			// Disable or enable the MVC part of the framework
-	    			MVC: true,
+	    			// Disable or enable the hook to handle the MVC component in the PHP side of the framework
+	    			MVCHook: true,
 
 	    			// The default messages used in various cases in the Messages extension
 	    			DefaultLoadingMessage: 'Loading',
@@ -1124,13 +1123,13 @@
 
 		    	// Load initial variables to describe the use of MVC
 
-		    	var UseMVC 			= this.Options.Get('MVC');
-		    	var MVCLocation 	= this.Url('src/js/libs/emx-mvc.js');
+		    	var UseMVCHook 		= this.Options.Get('MVCHook');
+		    	var MVCLocation 	= this.Url('src/js/libs/emx-mvchook.js');
 
 		    	// If MVC use is requested to will need to handle the original callback and
 		    	// add it to the callback of the MVC scripts being loaded
 
-		    	if ( UseMVC ) {
+		    	if ( UseMVCHook ) {
 
 		    		// Store original callback in a variable
 
