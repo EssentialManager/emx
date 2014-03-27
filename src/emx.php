@@ -19,12 +19,12 @@
    	    	// The VERSION constant is used primarily to check against the client-side
 	    	// JavaScript to avoid conflicting versions.
 
-	    	const VERSION 		= '1.0.0';
+	    	const VERSION 		= '1.0.2';
 
    	    }
 
         function Version() {
-            return '1.0.0';
+            return '1.0.2';
         }
 
    	    /* ======================================================================================================
