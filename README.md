@@ -1,16 +1,10 @@
 EMX
 ===
+EMX is a framework proposing an architecture for working with single-page AJAX-based applications which might get resource intensive. The framework is designed on top the MVC pattern and comes with an innovative approach to inversion of control and dependency injection.
 
-A framework for a streamlined, unified and close relationship between PHP and JavaScript.
+The framework was also aimed at streamlining the way things are done in PHP and JavaScript, and making the work with AJAX applications as painless as possible.
 
-Currently supports:
-
-* Dynamic "on the fly" loading of libraries
-* Dependency management for JavaScript libraries (Assets)
-* OOP architecture with inversion of control and dependency injection
-* AJAX architecture based on JSON
-* MVC (__In Development__)
-* Unit Testing (__Coming Soon__)
+The last goal for the framework was a simple unit testing framework utilizing the dependency injection pattern to create object mocks.
 
 Documentation
 ===
