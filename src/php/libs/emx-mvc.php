@@ -13,16 +13,17 @@
     namespace Emx\MVC {
 
         /* ======================================================================================================
-           EXCEPTION CLASS
+           NAMESPACE USAGES
         ====================================================================================================== */
 
-        final class Exception extends \Exception { }
+        use \Emx\Exception as Exception;
+        use \Emx\StandardClass as StandardClass;
 
         /* ======================================================================================================
            APPLICATION
         ====================================================================================================== */
 
-    	final class Application extends \Emx\StandardClass {
+    	final class Application extends StandardClass {
 
             /* ------------------------------------------------------------------------------------------------------
                DECLARATIONS
@@ -47,7 +48,9 @@
 
                                             'Render'                    => null /* We cannot set a function here
                                                                             so we handle that in the constructor
-                                                                         */
+                                                                         */,
+
+                                            'ViewExtension'             => 'html'
 
                                         );
 
@@ -55,13 +58,7 @@
                CONSTRUCTOR
             ------------------------------------------------------------------------------------------------------ */
 
-    		public function __construct() {
-
-                $this->_DefaultOptions['Render']    = function(  ) { 
-
-                                                    };
-
-            }
+    		public function __construct() { }
 
             /* ------------------------------------------------------------------------------------------------------
                CREATE DEPENDENCY MODEL
@@ -116,6 +113,7 @@
 
                     $ControllerInstance->Options()->Set('ModelBaseLocation', $this->Options()->Get('ModelBaseLocation'));
                     $ControllerInstance->Options()->Set('ViewBaseLocation', $this->Options()->Get('ViewBaseLocation'));
+                    $ControllerInstance->Options()->Set('ViewExtension', $this->Options()->Get('ViewExtension'));
 
                     // If the attempted method does not exist in the controller we default to Index
 
@@ -129,19 +127,27 @@
                     }
 
                     if ( $this->Options()->Get('AjaxMode') ) {
+
                         if ( ! ini_get('output_buffering') ) {
                             throw new Exception('Output buffering is not enabled.');
                         }
 
+                        // We start the output buffer to collect eventual content emitted by the controller
+
                         ob_start();
 
-                        $ControllerInstance->$Method();
+                        $ControllerFeedback     = $ControllerInstance->$Method( new ControllerFeedback );
+                        
+                        ob_clean();
 
-                        $BufferContent      = ob_get_clean();
+                        if ( strtolower(get_class($ControllerFeedback)) !== 'emx\mvc\controllerfeedback' ) {
+                            throw new Exception(sprintf('Controller "%s" method "%s" must return passed instance of ControllerFeedback', $Controller, $Method));
+                        }
 
-                        return array(
-                            'ControllerResponse'    => $BufferContent
-                        );
+                        $ControllerFeedback->RenderContentUsing($this->Options()->Get('Render'));
+
+                        return $ControllerFeedback->GetResponse();
+
                     } else {
                         $ControllerInstance->$Method();
                     }
@@ -164,6 +170,105 @@
     	}
 
         /* ======================================================================================================
+           CONTROLLER FEEDBACK
+        ====================================================================================================== */
+
+        final class ControllerFeedback {
+
+            /* ------------------------------------------------------------------------------------------------------
+               DECLARATIONS
+            ------------------------------------------------------------------------------------------------------ */
+
+            private $Content, $Data, $Models;
+
+            /* ------------------------------------------------------------------------------------------------------
+               GET RESPONSE
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function GetResponse() {
+
+                return array(
+                    // We do not typecast the View because null will indicate to the MVC Hook that we are not
+                    // intending to modify the viewport
+
+                    'View'      => $this->Content,
+
+                    'Data'      => (array) $this->Data
+                );
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               RENDER CONTENT USING
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function RenderContentUsing( $Function ) {
+
+                if ( ! is_null($this->Content) && is_callable($Function) ) {
+                    $this->Content  = $Function($this->Content, $this->GetModels());
+                }
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               CLEAR DATA
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function ClearData() {
+
+                $this->Data         = array();
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               SET DATA
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function SetData(array $Data = array()) {
+
+                foreach ( $Data as $Key => $Value ) {
+                    $this->Data[$Key]   = $Value;
+                }
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               ADD MODEL
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function AddModel( $EntryId, array $ModelData = array(), $PassToBrowser = false ) {
+
+                $this->Models[(string) $EntryId]    = $ModelData;
+
+                if ( $PassToBrowser ) {
+                    $this->Data[$EntryId]           = $ModelData;
+                }
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               GET MODELS
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function GetModels() {
+
+                return $this->Models;
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               SET CONTENT / VIEW
+            ------------------------------------------------------------------------------------------------------ */
+
+            public function SetContent( $Text ) {
+
+                $this->Content      = (string) $Text;
+
+            }
+
+        }
+
+        /* ======================================================================================================
            CONTROLLER
         ====================================================================================================== */
 
@@ -173,7 +278,7 @@
                DECLARATIONS
             ------------------------------------------------------------------------------------------------------ */
 
-            abstract public function Index();
+            abstract public function Index( $ControllerFeedback );
 
             /* ------------------------------------------------------------------------------------------------------
                CREATE DEPENDENCY MODEL
@@ -232,24 +337,28 @@
                RENDER VIEW
             ------------------------------------------------------------------------------------------------------ */
 
-            final public function Render( $View ) {
+            final public function FetchView( $View ) {
+
+                $Extension          = (string) $this->Options()->Get('ViewExtension');
+
+                if ( ! $Extension ) {
+                    $Extension      = 'html';
+                }
 
                 // Define the location to the view
 
                 $ViewLocation       = rtrim($this->Options()->Get('ViewBaseLocation'), '/')
-                                        . sprintf('/%s.php', strtolower($View));
+                                        . sprintf('/%s.%s', strtolower($View), $Extension);
 
                 try {
+
                     // Verify that the file exists
 
                     if ( ! file_exists($ViewLocation) ) {
                         throw new Exception(sprintf('View "%s" was not found at "%s"', $View, $ViewLocation));
                     }
 
-                    // We use include instead of require_once to avoid malfunction in cases
-                    // where the view is used multiple times
-
-                    include         $ViewLocation;
+                    return (string) file_get_contents($ViewLocation);
 
                 } catch ( Exception $e ) {
 
