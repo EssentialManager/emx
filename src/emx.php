@@ -77,12 +77,17 @@
             define('EMX_BASE_DIR', rtrim(realpath(__DIR__), '/'));
             define('EMX_PHP_DIR', EMX_BASE_DIR . '/php');
 
-            // Set the location to the MVC part of the framework
+            // Set the locations of native libraries
             $MVCLocation        = sprintf('%s/libs/emx-mvc.php', EMX_PHP_DIR);
+            $UnitsLocation      = sprintf('%s/libs/emx-units.php', EMX_PHP_DIR);
 
             // If the MVC file exists and MVC is enabled in the options we load the framework
-            if ( file_exists($MVCLocation) && Options::Get('MVC') ) {
+            if ( Options::Get('MVC') && file_exists($MVCLocation) ) {
                 require_once    $MVCLocation;
+            }
+
+            if ( Options::Get('Units') && file_exists($UnitsLocation) ) {
+                require_once    $UnitsLocation;
             }
 
             // If the passed callback is a valid callable function we execute it
@@ -98,26 +103,57 @@
 
         final class Options {
 
+            /* ------------------------------------------------------------------------------------------------------
+               DECLARATIONS
+            ------------------------------------------------------------------------------------------------------ */
+
+            // Array containing default options
+
             private static $_Config     = array(
-                                            'MVC'       => true
+
+                                            // Define which native libraries to load when Start is called
+                
+                                            'MVC'       => true,
+                                            'Units'     => true
+
                                         );
 
+            /* ------------------------------------------------------------------------------------------------------
+               GET OPTION
+            ------------------------------------------------------------------------------------------------------ */
+
             public static function Get( $Key = null ) {
+
                 if ( is_null($Key) || ! $Key ) {
+
                     return self::$_Config;
+
                 } else {
+
                     return self::$_Config[(string) $Key];
+                    
                 }
+
             }
 
+            /* ------------------------------------------------------------------------------------------------------
+               SET OPTION
+            ------------------------------------------------------------------------------------------------------ */
+
             public static function Set( $Key, $Value = null ) {
+
                 if ( is_array($Key) ) {
+
                     foreach ( $Key as $I => $X ) {
                         self::$_Config[(string) $I]     = $X;
                     }
+
                 } else {
+
                     self::$_Config[(string) $Key]       = $Value;
+
                 }
+
             }
 
         }
@@ -270,7 +306,17 @@
    	    			
    	    												);
 
+                return $this;
+
    	    	}
+
+            public function MockMethod() {
+
+                //echo 'mocked!';
+
+                return $this;
+
+            }
 
    	        /* ------------------------------------------------------------------------------------------------------
    	           GET REQUIREMENTS
