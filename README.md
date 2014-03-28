@@ -4,7 +4,9 @@ EMX is a two-fold MVC framework for PHP and JavaScript proposing an architecture
 
 The framework was also aimed at streamlining the way things are done in PHP and JavaScript, and making the work with AJAX applications as painless as possible.
 
-The last goal for the framework was a simple unit testing framework utilizing the dependency injection pattern to create object mocks.
+The last goal for the framework was a simple unit testing library with focus on readability.
+
+The framework in general is highly customizable. For instance you can easily replace the rendering engine for views or change the way test results are printed.
 
 Documentation
 ===
