@@ -23,6 +23,10 @@
 
         }
 
+        /* ======================================================================================================
+           VERSION
+        ====================================================================================================== */
+
         function Version() {
             return '1.0.2';
         }
@@ -51,16 +55,27 @@
            It is an easy way to debug your PHP in AJAX environment
         ====================================================================================================== */
 
-        function Debug( $Message ) {
+        function Debug( $Message, $Level = 100 ) {
 
             $CustomDebugFunction    = Options::Get('Debug');
             $DebugMode              = Options::Get('DebugMode');
 
             if ( $DebugMode ) {
                 if ( is_callable($CustomDebugFunction) ) {
+
                     $CustomDebugFunction($Message);
+
                 } else {
-                    throw new Exception('Debug: ' . $Message);
+
+                    switch ( (int) $Level ) {
+                        case 50:
+                            Ajax::AddDebugMessage($Message);
+                            break;
+                        case 100:
+                        default:
+                            throw new Exception('Debug: ' . $Message);
+                    }
+
                 }
             }
 
@@ -72,6 +87,8 @@
 
         function Start( $Callback = null ) {
 
+            // In case this is not done default by server there's a risk warnings and notices can ruin the
+            // JSON output
             ini_set('display_errors', false);
 
             // Create the directories we use through-out the framework as constant so they cannot
@@ -454,6 +471,7 @@
             ------------------------------------------------------------------------------------------------------ */
 
             private static $Response        = array();
+            private static $DebugMessages   = array();
             private static $ErrorState      = false;
             private static $ErrorMessage    = null;
 
@@ -484,6 +502,16 @@
             public static function GetResponse() {
 
                 return self::$Response;
+
+            }
+
+            /* ------------------------------------------------------------------------------------------------------
+               ADD DEBUG MESSAGE
+            ------------------------------------------------------------------------------------------------------ */
+
+            public static function AddDebugMessage( $Message ) {
+
+                self::$DebugMessages[]      = (string) $Message;
 
             }
 
@@ -545,16 +573,18 @@
                 echo json_encode(array(
 
                     // The success is indicated by the reversed value of the ErrorState
-                    'Success'   => ! ( self::$ErrorState ),
+                    'Success'       => ! ( self::$ErrorState ),
 
                     // Include the version number for comparison on the client-side
-                    'Version'   => Version(),
+                    'Version'       => Version(),
 
                     // Include the response set the custom script which was executed
-                    'Response'  => ( ! self::$ErrorState ) ? self::GetResponse() : array(),
+                    'Response'      => ( ! self::$ErrorState ) ? self::GetResponse() : array(),
 
                     // If an error message has been set by the Terminate method it will be included here
-                    'Error'     => ( self::$ErrorMessage ) ? self::$ErrorMessage : null
+                    'Error'         => ( self::$ErrorMessage ) ? self::$ErrorMessage : null,
+
+                    'Debugging'     => self::$DebugMessages
 
                 ));
 
