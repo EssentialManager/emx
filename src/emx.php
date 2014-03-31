@@ -3,55 +3,55 @@
     #########################################################################################################
     #
     #   EMX Framework
-	#
-	# 	Developed by Essential Manager (www.essential-manager.com)
+    #
+    #   Developed by Essential Manager (www.essential-manager.com)
     #
     #########################################################################################################
 
     namespace Emx {
 
-   	    /* ======================================================================================================
-   	       BASIC EMX INTERFACE
-   	    ====================================================================================================== */
+        /* ======================================================================================================
+           BASIC EMX INTERFACE
+        ====================================================================================================== */
 
-   	    interface EmxBasic {
+        interface EmxBasic {
 
-   	    	// The VERSION constant is used primarily to check against the client-side
-	    	// JavaScript to avoid conflicting versions.
+            // The VERSION constant is used primarily to check against the client-side
+            // JavaScript to avoid conflicting versions.
 
-	    	const VERSION 		= '1.0.2';
+            const VERSION       = '1.0.2';
 
-   	    }
+        }
 
         function Version() {
             return '1.0.2';
         }
 
-   	    /* ======================================================================================================
-   	       EXCEPTION
-   	    ====================================================================================================== */
+        /* ======================================================================================================
+           EXCEPTION
+        ====================================================================================================== */
 
-   	    final class Exception extends \Exception {
+        final class Exception extends \Exception {
 
-   	    	// For now this is a placeholder in case we should need it later on for our own purposes
+            // For now this is a placeholder in case we should need it later on for our own purposes
 
-   	    	public function __construct( $Message ) {
+            public function __construct( $Message ) {
 
-   	    		throw new \Exception( $Message );
+                throw new \Exception( $Message );
 
-   	    	}
+            }
 
-   	    }
+        }
 
-   	    /* ======================================================================================================
-   	       DEBUG
+        /* ======================================================================================================
+           DEBUG
 
-   	       Call this function to send debuggin messages to the client-side (JavaScript)
-   	       Unless replaced by a custom made function these messages are shown in the browser console
-   	       It is an easy way to debug your PHP in AJAX environment
-   	    ====================================================================================================== */
+           Call this function to send debuggin messages to the client-side (JavaScript)
+           Unless replaced by a custom made function these messages are shown in the browser console
+           It is an easy way to debug your PHP in AJAX environment
+        ====================================================================================================== */
 
-   	    function Debug( $Message ) {
+        function Debug( $Message ) {
 
             $CustomDebugFunction    = Options::Get('Debug');
             $DebugMode              = Options::Get('DebugMode');
@@ -64,13 +64,15 @@
                 }
             }
 
-   	    }
+        }
 
         /* ======================================================================================================
            START
         ====================================================================================================== */
 
         function Start( $Callback = null ) {
+
+            ini_set('display_errors', false);
 
             // Create the directories we use through-out the framework as constant so they cannot
             // be overwritten
@@ -182,11 +184,11 @@
 
         }
 
-   	    /* ======================================================================================================
-   	       ABSTRACT EMX OBJECT CLASS
-   	    ====================================================================================================== */
+        /* ======================================================================================================
+           ABSTRACT EMX OBJECT CLASS
+        ====================================================================================================== */
 
-   	    abstract class StandardClass implements EmxBasic {
+        abstract class StandardClass implements EmxBasic {
 
             /* ------------------------------------------------------------------------------------------------------
                DECLARATIONS
@@ -196,24 +198,28 @@
 
             protected $Options;
 
-   	        /* ------------------------------------------------------------------------------------------------------
-   	           ABSTRACT FUNCTIONS
-   	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               ABSTRACT FUNCTIONS
+            ------------------------------------------------------------------------------------------------------ */
 
-   	        abstract protected function CreateDependencyModel( $DependencyModel );
+            protected function CreateDependencyModel( $DependencyModel ) {
 
-   	        /* ------------------------------------------------------------------------------------------------------
-   	           GET DEPENDENCIES
+                return $DependencyModel;
 
-   	           We want to keep CreateDependencyModel as isolated as possible, so instead we have build a
-   	           streamlined function ot return the dependency models to the factory
-   	        ------------------------------------------------------------------------------------------------------ */
+            }
 
-   	        final public function GetDependencies() {
+            /* ------------------------------------------------------------------------------------------------------
+               GET DEPENDENCIES
 
-   	        	return $this->CreateDependencyModel( new DependencyModel );
+               We want to keep CreateDependencyModel as isolated as possible, so instead we have build a
+               streamlined function ot return the dependency models to the factory
+            ------------------------------------------------------------------------------------------------------ */
 
-   	        }
+            final public function GetDependencies() {
+
+                return $this->CreateDependencyModel( new DependencyModel );
+
+            }
 
             /* ------------------------------------------------------------------------------------------------------
                SET OPTIONS
@@ -263,52 +269,52 @@
 
             }
 
-   	        /* ------------------------------------------------------------------------------------------------------
-   	           VERSION
-   	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               VERSION
+            ------------------------------------------------------------------------------------------------------ */
 
-   	    	final public function Version() {
+            final public function Version() {
 
-   	    		return (string) self::VERSION;
+                return (string) self::VERSION;
 
-   	    	}
+            }
 
-   	    }
+        }
 
-   	    /* ======================================================================================================
-   	       DEPENDENCY MODEL
+        /* ======================================================================================================
+           DEPENDENCY MODEL
 
-   	       The Dependency Model object is expected to be returned by the SetDependencies method of all
-   	       classes created by the factory in the EMX framework.
-   	    ====================================================================================================== */
+           The Dependency Model object is expected to be returned by the SetDependencies method of all
+           classes created by the factory in the EMX framework.
+        ====================================================================================================== */
 
-   	    final class DependencyModel {
+        final class DependencyModel {
 
-   	        /* ------------------------------------------------------------------------------------------------------
-   	           DECLARATIONS
-   	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               DECLARATIONS
+            ------------------------------------------------------------------------------------------------------ */
 
-   	    	private $RequiredInstances     = array();
+            private $RequiredInstances     = array();
 
-   	   	    /* ------------------------------------------------------------------------------------------------------
-   	   	       REQUIRE INSTANCE OF
+            /* ------------------------------------------------------------------------------------------------------
+               REQUIRE INSTANCE OF
 
-   	   	       Instruct the Factory to inject the instance named by the argument $InstanceId
-   	   	    ------------------------------------------------------------------------------------------------------ */
+               Instruct the Factory to inject the instance named by the argument $InstanceId
+            ------------------------------------------------------------------------------------------------------ */
 
-   	    	public function RequireInstanceOf( $InstanceId ) {
+            public function RequireInstanceOf( $InstanceId ) {
 
-   	    		// Add the instance to the array of required instances
+                // Add the instance to the array of required instances
 
-   	    		$this->RequiredInstances[$InstanceId] 	= array(
+                $this->RequiredInstances[$InstanceId]   = array(
 
-   	    													// We can add options here should we once day want to do
-   	    			
-   	    												);
+                                                            // We can add options here should we once day want to do
+                    
+                                                        );
 
                 return $this;
 
-   	    	}
+            }
 
             public function MockMethod() {
 
@@ -318,26 +324,26 @@
 
             }
 
-   	        /* ------------------------------------------------------------------------------------------------------
-   	           GET REQUIREMENTS
+            /* ------------------------------------------------------------------------------------------------------
+               GET REQUIREMENTS
 
-   	           List all the requirements currently listed
-   	           This method is typically called by the factory when the object is created
-   	        ------------------------------------------------------------------------------------------------------ */
+               List all the requirements currently listed
+               This method is typically called by the factory when the object is created
+            ------------------------------------------------------------------------------------------------------ */
 
-   	    	public function GetRequirements() {
+            public function GetRequirements() {
 
-   	    		return $this->RequiredInstances;
+                return $this->RequiredInstances;
 
-   	    	}
+            }
 
-   	    }
+        }
 
-   	    /* ======================================================================================================
-   	       FACTORY
-   	    ====================================================================================================== */
+        /* ======================================================================================================
+           FACTORY
+        ====================================================================================================== */
 
-   	   	final class Factory {
+        final class Factory {
 
             /* ------------------------------------------------------------------------------------------------------
                DECLARATIONS
@@ -376,30 +382,30 @@
 
             }
 
-   	   	    /* ------------------------------------------------------------------------------------------------------
-   	   	       CREATE
-   	   	    ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               CREATE
+            ------------------------------------------------------------------------------------------------------ */
 
-   	    	public static function Create( $ClassName ) {
+            public static function Create( $ClassName ) {
 
                 // Check if the class exists. First as a plain class and since as part of the Emx namespace
-   	    		$ParsedClassName 	= ( class_exists($ClassName) ) ? $ClassName : sprintf('Emx\%s', $ClassName);
+                $ParsedClassName    = ( class_exists($ClassName) ) ? $ClassName : sprintf('Emx\%s', $ClassName);
 
-   	    		if ( class_exists($ParsedClassName) ) {
+                if ( class_exists($ParsedClassName) ) {
 
                     // Create an instance of the class
-   	    			$Instance 			= new $ParsedClassName;
+                    $Instance           = new $ParsedClassName;
 
                     // Insert the options object
                     $Instance->SetOptions( new StandardClassOptions );
 
                     // Load a list of the dependencies the class demands
-   	    			$Dependencies 		= $Instance->GetDependencies();
+                    $Dependencies       = $Instance->GetDependencies();
 
                     // Check if the returned list is in fact of the DependencyModel type
-   	    			if ( strtolower(get_class($Dependencies)) !== 'emx\dependencymodel' ) {
-   	    				Debug('Object returned by CreateDependencyModel must be of the DependencyModel type.');
-   	    			}
+                    if ( strtolower(get_class($Dependencies)) !== 'emx\dependencymodel' ) {
+                        Debug('Object returned by CreateDependencyModel must be of the DependencyModel type.');
+                    }
 
                     // List the requirements (a function of the DependencyModel class)
                     $Requirements       = $Dependencies->GetRequirements();
@@ -427,137 +433,137 @@
                     }
 
                     // Return the class with its injected dependencies
-   	    			return $Instance;
-   	    		}
+                    return $Instance;
+                }
 
                 // Return null if the class was not found
-   	    		return null;
+                return null;
 
-   	    	}
+            }
 
-   	    }
+        }
 
-	    /* ==================================================================================================
-	       AJAX
-	    ================================================================================================== */
+        /* ==================================================================================================
+           AJAX
+        ================================================================================================== */
 
-	    final class Ajax {
+        final class Ajax {
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           DECLARATIONS
-	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               DECLARATIONS
+            ------------------------------------------------------------------------------------------------------ */
 
-	        private static $Response 		= array();
-	        private static $ErrorState  	= false;
-	        private static $ErrorMessage 	= null;
+            private static $Response        = array();
+            private static $ErrorState      = false;
+            private static $ErrorMessage    = null;
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           CONSTRUCTOR
-	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               CONSTRUCTOR
+            ------------------------------------------------------------------------------------------------------ */
 
-	        private function __construct() { }
+            private function __construct() { }
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           SET RESPONSE
+            /* ------------------------------------------------------------------------------------------------------
+               SET RESPONSE
 
-	           This response is returned and passed as JSON into the JavaScript callback procedure
-	        ------------------------------------------------------------------------------------------------------ */
+               This response is returned and passed as JSON into the JavaScript callback procedure
+            ------------------------------------------------------------------------------------------------------ */
 
-	        public static function SetResponse( array $Response ) {
+            public static function SetResponse( array $Response ) {
 
-	        	self::$Response 	= $Response;
+                self::$Response     = $Response;
 
-	        }
+            }
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           GET RESPONSE
+            /* ------------------------------------------------------------------------------------------------------
+               GET RESPONSE
 
-	           Return the current response
-	        ------------------------------------------------------------------------------------------------------ */
+               Return the current response
+            ------------------------------------------------------------------------------------------------------ */
 
-	        public static function GetResponse() {
+            public static function GetResponse() {
 
-	        	return self::$Response;
+                return self::$Response;
 
-	        }
+            }
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           STRAP ERROR HANDLER
+            /* ------------------------------------------------------------------------------------------------------
+               STRAP ERROR HANDLER
 
-	           Used to catch exceptions that are thrown outside Try/Catch constructs and in EMX AJAX context
-	        ------------------------------------------------------------------------------------------------------ */
+               Used to catch exceptions that are thrown outside Try/Catch constructs and in EMX AJAX context
+            ------------------------------------------------------------------------------------------------------ */
 
-	        public static function StrapErrorHandler() {
+            public static function StrapErrorHandler() {
 
-	        	set_exception_handler(function( $Message ) {
+                set_exception_handler(function( $Message ) {
 
-	        		// Construct the JSON string - Due to the current scope we cannot use the $this
-	        		// variable and the methods in the AJAX class
+                    // Construct the JSON string - Due to the current scope we cannot use the $this
+                    // variable and the methods in the AJAX class
 
-	        		$OutputString 		= json_encode(array(
-	        								'Success' 	=> false,
-	        								'Error' 	=> 'Please wrap the EMX script in a try/catch construct.',
-	        								'Response' 	=> array()
-	        							));
+                    $OutputString       = json_encode(array(
+                                            'Success'   => false,
+                                            'Error'     => 'Please wrap the EMX script in a try/catch construct.',
+                                            'Response'  => array()
+                                        ));
 
 
-	        		// Use the Die method to make sure no other content is shown
-	        		// More content will make the JSON unparsable for the client
+                    // Use the Die method to make sure no other content is shown
+                    // More content will make the JSON unparsable for the client
 
-	        		die ($OutputString);
+                    die ($OutputString);
 
-	        	});
+                });
 
-	        }
+            }
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           TERMINATE
+            /* ------------------------------------------------------------------------------------------------------
+               TERMINATE
 
-	           Terminate the AJAX procedure and return an error message to the client
-	        ------------------------------------------------------------------------------------------------------ */
+               Terminate the AJAX procedure and return an error message to the client
+            ------------------------------------------------------------------------------------------------------ */
 
-	    	public static function Terminate( $Message ) {
+            public static function Terminate( $Message ) {
 
                 // If output buffering was active we want to make sure it is not drawn to the document
                 // since that will make the JSON response invalid
                 
                 ob_clean();
 
-	    		self::$ErrorState 		= true;
-	    		self::$ErrorMessage 	= (string) $Message;
+                self::$ErrorState       = true;
+                self::$ErrorMessage     = (string) $Message;
 
-	    		self::Execute();
+                self::Execute();
 
-	    	}
+            }
 
-	        /* ------------------------------------------------------------------------------------------------------
-	           EXECUTE
-	        ------------------------------------------------------------------------------------------------------ */
+            /* ------------------------------------------------------------------------------------------------------
+               EXECUTE
+            ------------------------------------------------------------------------------------------------------ */
 
-	        public static function Execute() {
+            public static function Execute() {
 
-	        	echo json_encode(array(
+                echo json_encode(array(
 
-	        		// The success is indicated by the reversed value of the ErrorState
-	        		'Success' 	=> ! ( self::$ErrorState ),
+                    // The success is indicated by the reversed value of the ErrorState
+                    'Success'   => ! ( self::$ErrorState ),
 
-	        		// Include the version number for comparison on the client-side
-	        		'Version' 	=> Version(),
+                    // Include the version number for comparison on the client-side
+                    'Version'   => Version(),
 
-	        		// Include the response set the custom script which was executed
-	        		'Response' 	=> ( ! self::$ErrorState ) ? self::GetResponse() : array(),
+                    // Include the response set the custom script which was executed
+                    'Response'  => ( ! self::$ErrorState ) ? self::GetResponse() : array(),
 
-	        		// If an error message has been set by the Terminate method it will be included here
-	        		'Error' 	=> ( self::$ErrorMessage ) ? self::$ErrorMessage : null
+                    // If an error message has been set by the Terminate method it will be included here
+                    'Error'     => ( self::$ErrorMessage ) ? self::$ErrorMessage : null
 
-	        	));
+                ));
 
-	        	// End the script as the JSON has now been printed
-	        	exit;
+                // End the script as the JSON has now been printed
+                exit;
 
-	        }
+            }
 
-	    }
+        }
 
     }
 
