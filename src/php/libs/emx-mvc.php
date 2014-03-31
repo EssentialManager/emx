@@ -31,7 +31,7 @@
                                             // handled by the client. If AJAX mode is disabled the views will be
                                             // rendered directly
 
-                                            'AjaxMode'                  => false,
+                                            'AjaxMode'                  => true,
 
                                             // Default locations for the controllers, models and views
 
