@@ -61,8 +61,8 @@
                 var MethodName          = Options.Event;
                 var NoView              = Options.NoView;
 
-                var KeyControllerOnly   = Find.Controller + '@';
-                var KeyFull             = Find.Controller + '@' + Find.Method;
+                var KeyControllerOnly   = (Find.Controller + '@').toLowerCase();
+                var KeyFull             = (Find.Controller + '@' + Find.Method).toLowerCase();
 
                 var Arguments           = {
                                             Viewport: (( ! NoView ) ? this._Viewport : undefined ),
@@ -163,11 +163,11 @@
                     // In this case they are bound in a general sense
 
                     if ( typeof Events == 'undefined' ) {
-                        var Key                 = '_Generics';
-                        this._Bindings[Key]     = To;
+                        var Key                                 = '_Generics';
+                        this._Bindings[Key.toLowerCase()]       = To;
                     } else {
-                        var Key                 = To.Controller + '@' + (( typeof To.Method == 'string' && To.Method ) ? To.Method : '');
-                        this._Bindings[Key]     = Events;
+                        var Key                                 = To.Controller + '@' + (( typeof To.Method == 'string' && To.Method ) ? To.Method : '');
+                        this._Bindings[Key.toLowerCase()]       = Events;
                     }
                     
 
