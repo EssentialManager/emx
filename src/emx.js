@@ -1078,6 +1078,12 @@
 		    				// Hide the loading message
 		    				Scope.Messages.Hide();
 
+		    				if ( typeof Data.Debugging === 'object' ) {
+		    					for ( I in Data.Debugging ) {
+		    						console.log('Warning: ' + Data.Debugging[I]);
+		    					}
+		    				}
+
 		    				if ( ! StrictAjax || (StrictAjax && Data.Success != 'undefined') ) {
 			    				if ( Data.Success ) {
 			    					if ( typeof Options.Success === 'function' ) {
