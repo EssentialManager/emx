@@ -1,5 +1,5 @@
 {
-    "name": "emx/emx",
+    "name": "essentialmanager/emx",
     "type": "library",
     "description": "Framework for PHP and JavaScript",
     "keywords": ["framework","mvc","ajax","unit-testing"],
