@@ -13,6 +13,8 @@ Installing
 
 You can install EMX using Composer.
 
+The library is located at: essentialmanager/emx
+
 Only the "master-dev" is available as of April 8, 2014.
 
 Documentation
