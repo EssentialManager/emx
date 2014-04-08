@@ -1,0 +1,21 @@
+{
+    "name": "emx/emx",
+    "type": "library",
+    "description": "Framework for PHP and JavaScript",
+    "keywords": ["framework","mvc","ajax","unit-testing"],
+    "homepage": "http://github.com/EssentialManager/emx/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mark H. Jensen",
+            "email": "mark@hunermund.dk",
+            "homepage": "http://hunermund.dk",
+            "role": "Lead Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+    }
+}
