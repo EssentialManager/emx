@@ -8,6 +8,13 @@ The last goal for the framework was a simple unit testing library with focus on 
 
 The framework in general is highly customizable. For instance you can easily replace the rendering engine for views or change the way test results are printed.
 
+Installing
+===
+
+You can install EMX using Composer.
+
+Only the "master-dev" is available as of April 8, 2014.
+
 Documentation
 ===
 https://github.com/EssentialManager/emx/wiki
